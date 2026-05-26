@@ -1,7 +1,3 @@
-// Fix for GitHub Pages routing
-if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
-  window.location.href = '/';
-}
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import QRCode from "qrcode";
