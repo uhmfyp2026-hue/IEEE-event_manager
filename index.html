@@ -1,27 +1,1190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IEEE Riphah - Event Check-In System</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: #040410;
-            overflow: hidden;
-        }
-        #root {
-            height: 100vh;
-            overflow: hidden;
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IEEE TicketScan – Riphah Student Branch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --ieee-blue:#006699;
+    --ieee-sky:#00a8e8;
+    --ieee-dark:#020c1b;
+    --ieee-card:#041428;
+    --ieee-panel:#071e36;
+    --ieee-border:#0d3a6e;
+    --ieee-accent:#00d4ff;
+    --ieee-green:#00e87a;
+    --ieee-red:#ff3b5c;
+    --ieee-yellow:#ffd166;
+    --text-primary:#e8f4fd;
+    --text-muted:#6b9ab8;
+    --font-main:'Space Grotesk',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  body{
+    font-family:var(--font-main);
+    background:var(--ieee-dark);
+    color:var(--text-primary);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  /* Grid background */
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(0,168,232,0.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,168,232,0.04) 1px,transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* ── HEADER ── */
+  header{
+    position:relative;
+    z-index:10;
+    background:rgba(4,20,40,0.95);
+    border-bottom:1px solid var(--ieee-border);
+    padding:0 2rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:64px;
+    backdrop-filter:blur(12px);
+  }
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo-badge{
+    width:38px;height:38px;
+    background:linear-gradient(135deg,var(--ieee-blue),var(--ieee-sky));
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;letter-spacing:0.5px;color:#fff;
+  }
+  .logo-text{font-size:15px;font-weight:600;}
+  .logo-sub{font-size:11px;color:var(--text-muted);margin-top:1px;}
+  .live-badge{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(0,232,122,0.1);
+    border:1px solid rgba(0,232,122,0.3);
+    border-radius:20px;padding:4px 12px;
+    font-size:12px;color:var(--ieee-green);font-weight:600;
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--ieee-green);animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  /* ── NAV TABS ── */
+  .tabs{
+    position:relative;z-index:10;
+    display:flex;gap:4px;
+    background:rgba(4,20,40,0.9);
+    border-bottom:1px solid var(--ieee-border);
+    padding:0 2rem;
+    backdrop-filter:blur(12px);
+  }
+  .tab{
+    padding:14px 20px;
+    font-size:13px;font-weight:500;
+    color:var(--text-muted);
+    border:none;background:none;cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:all 0.2s;
+    display:flex;align-items:center;gap:7px;
+  }
+  .tab:hover{color:var(--ieee-sky);}
+  .tab.active{color:var(--ieee-accent);border-bottom-color:var(--ieee-accent);}
+  .tab-icon{font-size:16px;}
+
+  /* ── MAIN ── */
+  main{
+    position:relative;z-index:5;
+    max-width:1100px;margin:0 auto;
+    padding:2rem;
+  }
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ── STAT CARDS ── */
+  .stats-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;margin-bottom:2rem;
+  }
+  .stat-card{
+    background:var(--ieee-card);
+    border:1px solid var(--ieee-border);
+    border-radius:12px;padding:1.2rem;
+    position:relative;overflow:hidden;
+  }
+  .stat-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--ieee-blue),var(--ieee-sky));
+  }
+  .stat-card.green::before{background:linear-gradient(90deg,#00a851,var(--ieee-green));}
+  .stat-card.red::before{background:linear-gradient(90deg,#c0003a,var(--ieee-red));}
+  .stat-card.yellow::before{background:linear-gradient(90deg,#b89000,var(--ieee-yellow));}
+  .stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .stat-value{font-size:32px;font-weight:700;font-family:var(--font-mono);line-height:1;}
+  .stat-value.blue{color:var(--ieee-sky);}
+  .stat-value.green{color:var(--ieee-green);}
+  .stat-value.red{color:var(--ieee-red);}
+  .stat-value.yellow{color:var(--ieee-yellow);}
+  .stat-sub{font-size:11px;color:var(--text-muted);margin-top:6px;}
+
+  /* ── SECTION CARDS ── */
+  .card{
+    background:var(--ieee-card);
+    border:1px solid var(--ieee-border);
+    border-radius:14px;padding:1.5rem;
+    margin-bottom:1.5rem;
+  }
+  .card-title{
+    font-size:14px;font-weight:600;
+    color:var(--ieee-accent);
+    text-transform:uppercase;letter-spacing:1.5px;
+    margin-bottom:1rem;
+    display:flex;align-items:center;gap:8px;
+  }
+  .card-title svg{width:16px;height:16px;}
+
+  /* ── IMPORT ── */
+  .drop-zone{
+    border:2px dashed var(--ieee-border);
+    border-radius:12px;padding:3rem;
+    text-align:center;cursor:pointer;
+    transition:all 0.2s;margin-bottom:1rem;
+  }
+  .drop-zone:hover,.drop-zone.dragover{
+    border-color:var(--ieee-accent);
+    background:rgba(0,212,255,0.04);
+  }
+  .drop-icon{font-size:40px;margin-bottom:12px;opacity:0.5;}
+  .drop-text{color:var(--text-muted);font-size:14px;}
+  .drop-text strong{color:var(--ieee-sky);}
+  textarea.csv-input{
+    width:100%;height:160px;
+    background:var(--ieee-panel);
+    border:1px solid var(--ieee-border);
+    border-radius:10px;padding:12px;
+    color:var(--text-primary);
+    font-family:var(--font-mono);font-size:12px;
+    resize:vertical;outline:none;
+    transition:border 0.2s;
+  }
+  textarea.csv-input:focus{border-color:var(--ieee-accent);}
+  .format-hint{
+    font-size:11px;color:var(--text-muted);
+    background:var(--ieee-panel);
+    border:1px solid var(--ieee-border);
+    border-radius:8px;padding:10px 14px;
+    font-family:var(--font-mono);margin-bottom:1rem;
+  }
+  .btn{
+    padding:10px 22px;border-radius:8px;
+    font-family:var(--font-main);font-size:13px;font-weight:600;
+    cursor:pointer;border:none;transition:all 0.2s;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--ieee-blue),var(--ieee-sky));
+    color:#fff;
+  }
+  .btn-primary:hover{opacity:0.88;transform:translateY(-1px);}
+  .btn-outline{
+    background:transparent;
+    border:1px solid var(--ieee-border);
+    color:var(--text-muted);
+  }
+  .btn-outline:hover{border-color:var(--ieee-sky);color:var(--ieee-sky);}
+  .btn-danger{background:rgba(255,59,92,0.15);color:var(--ieee-red);border:1px solid rgba(255,59,92,0.3);}
+  .btn-danger:hover{background:rgba(255,59,92,0.25);}
+  .btn-green{background:rgba(0,232,122,0.15);color:var(--ieee-green);border:1px solid rgba(0,232,122,0.3);}
+  .btn-green:hover{background:rgba(0,232,122,0.25);}
+
+  /* ── PARTICIPANT TABLE ── */
+  .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--ieee-border);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead tr{background:rgba(0,102,153,0.2);}
+  th{
+    padding:10px 14px;text-align:left;
+    color:var(--text-muted);font-weight:600;
+    font-size:11px;text-transform:uppercase;letter-spacing:1px;
+    border-bottom:1px solid var(--ieee-border);
+  }
+  td{
+    padding:10px 14px;
+    border-bottom:1px solid rgba(13,58,110,0.5);
+    color:var(--text-primary);
+  }
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(0,168,232,0.04);}
+  .badge{
+    display:inline-block;
+    padding:3px 10px;border-radius:20px;
+    font-size:11px;font-weight:600;
+  }
+  .badge-pending{background:rgba(255,209,102,0.15);color:var(--ieee-yellow);border:1px solid rgba(255,209,102,0.3);}
+  .badge-checked{background:rgba(0,232,122,0.15);color:var(--ieee-green);border:1px solid rgba(0,232,122,0.3);}
+  .search-bar{
+    width:100%;padding:10px 14px;
+    background:var(--ieee-panel);
+    border:1px solid var(--ieee-border);
+    border-radius:8px;color:var(--text-primary);
+    font-family:var(--font-main);font-size:13px;
+    outline:none;margin-bottom:1rem;
+    transition:border 0.2s;
+  }
+  .search-bar:focus{border-color:var(--ieee-accent);}
+  .search-bar::placeholder{color:var(--text-muted);}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;}
+  .field-label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+  .no-margin{margin:0}
+
+  /* ── QR GRID ── */
+  .qr-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+    gap:14px;
+  }
+  .qr-item{
+    background:var(--ieee-panel);
+    border:1px solid var(--ieee-border);
+    border-radius:12px;padding:14px;
+    text-align:center;cursor:pointer;
+    transition:all 0.2s;
+  }
+  .qr-item:hover{border-color:var(--ieee-sky);transform:translateY(-2px);}
+  .qr-item.checked{border-color:var(--ieee-green);background:rgba(0,232,122,0.04);}
+  .qr-canvas{margin:0 auto 10px;display:block;}
+  .qr-name{font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px;word-break:break-word;}
+  .qr-id{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);}
+
+  /* ── SCANNER ── */
+  .scanner-wrap{
+    position:relative;
+    width:100%;max-width:420px;
+    margin:0 auto 1.5rem;
+  }
+  #scanner-video{
+    width:100%;border-radius:14px;
+    background:#000;
+    border:2px solid var(--ieee-border);
+    display:block;
+  }
+  .scan-overlay{
+    position:absolute;inset:0;
+    border-radius:14px;pointer-events:none;
+  }
+  .scan-corner{
+    position:absolute;width:28px;height:28px;
+    border-color:var(--ieee-accent);border-style:solid;border-width:0;
+  }
+  .scan-corner.tl{top:10px;left:10px;border-top-width:3px;border-left-width:3px;border-radius:4px 0 0 0;}
+  .scan-corner.tr{top:10px;right:10px;border-top-width:3px;border-right-width:3px;border-radius:0 4px 0 0;}
+  .scan-corner.bl{bottom:10px;left:10px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 4px;}
+  .scan-corner.br{bottom:10px;right:10px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 4px 0;}
+  .scan-line{
+    position:absolute;left:14px;right:14px;height:2px;
+    background:linear-gradient(90deg,transparent,var(--ieee-accent),transparent);
+    top:50%;animation:scan-move 2s ease-in-out infinite;
+  }
+  @keyframes scan-move{0%{top:15%;}100%{top:85%;}}
+  #scanner-canvas{display:none;}
+
+  .result-box{
+    border-radius:12px;padding:1.5rem;text-align:center;
+    margin-bottom:1rem;transition:all 0.3s;
+    border:1px solid transparent;
+  }
+  .result-box.success{
+    background:rgba(0,232,122,0.1);
+    border-color:rgba(0,232,122,0.4);
+  }
+  .result-box.fail{
+    background:rgba(255,59,92,0.1);
+    border-color:rgba(255,59,92,0.4);
+  }
+  .result-box.idle{
+    background:var(--ieee-panel);
+    border-color:var(--ieee-border);
+  }
+  .result-icon{font-size:48px;margin-bottom:10px;}
+  .result-name{font-size:20px;font-weight:700;margin-bottom:4px;}
+  .result-detail{font-size:13px;color:var(--text-muted);}
+  .result-detail.green{color:var(--ieee-green);}
+  .result-detail.red{color:var(--ieee-red);}
+
+  /* ── MANUAL SCAN ── */
+  .manual-row{display:flex;gap:10px;margin-top:1rem;}
+  .manual-input{
+    flex:1;padding:10px 14px;
+    background:var(--ieee-panel);
+    border:1px solid var(--ieee-border);
+    border-radius:8px;color:var(--text-primary);
+    font-family:var(--font-mono);font-size:13px;
+    outline:none;transition:border 0.2s;
+  }
+  .manual-input:focus{border-color:var(--ieee-accent);}
+
+  /* ── SCAN LOG ── */
+  .log-list{max-height:260px;overflow-y:auto;}
+  .log-item{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 0;
+    border-bottom:1px solid rgba(13,58,110,0.4);
+    font-size:12px;
+  }
+  .log-item:last-child{border-bottom:none;}
+  .log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .log-dot.ok{background:var(--ieee-green);}
+  .log-dot.err{background:var(--ieee-red);}
+  .log-time{color:var(--text-muted);font-family:var(--font-mono);font-size:10px;min-width:54px;}
+  .log-name{font-weight:600;}
+  .log-status{margin-left:auto;color:var(--text-muted);}
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap{height:6px;background:var(--ieee-panel);border-radius:3px;overflow:hidden;margin-top:8px;}
+  .progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--ieee-blue),var(--ieee-green));transition:width 0.5s;}
+
+  /* ── TOAST ── */
+  #toast{
+    position:fixed;bottom:24px;right:24px;
+    padding:12px 20px;border-radius:10px;
+    font-size:13px;font-weight:600;
+    z-index:9999;opacity:0;
+    transition:opacity 0.3s,transform 0.3s;
+    transform:translateY(10px);
+    pointer-events:none;max-width:320px;
+  }
+  #toast.show{opacity:1;transform:translateY(0);}
+  #toast.success{background:rgba(0,232,122,0.2);border:1px solid rgba(0,232,122,0.5);color:var(--ieee-green);}
+  #toast.error{background:rgba(255,59,92,0.2);border:1px solid rgba(255,59,92,0.5);color:var(--ieee-red);}
+  #toast.info{background:rgba(0,168,232,0.2);border:1px solid rgba(0,168,232,0.5);color:var(--ieee-sky);}
+
+  .empty-state{text-align:center;padding:3rem;color:var(--text-muted);}
+  .empty-icon{font-size:40px;margin-bottom:10px;opacity:0.3;}
+
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;}
+
+  /* progress ring */
+  .prog-ring{display:inline-block;position:relative;}
+  .ring-svg{transform:rotate(-90deg);}
+  .ring-bg{fill:none;stroke:var(--ieee-panel);stroke-width:6;}
+  .ring-fill{fill:none;stroke:var(--ieee-green);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 0.8s;}
+  .ring-label{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    font-family:var(--font-mono);
+  }
+  .ring-pct{font-size:22px;font-weight:700;color:var(--ieee-green);}
+  .ring-sub{font-size:10px;color:var(--text-muted);}
+</style>
 </head>
 <body>
-    <div id="root"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">IEEE</div>
+    <div>
+      <div class="logo-text">TicketScan Pro</div>
+      <div class="logo-sub">Riphah International University – Student Branch</div>
+    </div>
+  </div>
+  <div class="live-badge"><span class="live-dot"></span>System Ready</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('import')">
+    <span class="tab-icon">📥</span> Import Data
+  </button>
+  <button class="tab" onclick="switchTab('participants')">
+    <span class="tab-icon">👥</span> Participants
+  </button>
+  <button class="tab" onclick="switchTab('qrcodes')">
+    <span class="tab-icon">⬛</span> QR Codes
+  </button>
+  <button class="tab" onclick="switchTab('scanner')">
+    <span class="tab-icon">📷</span> Scanner
+  </button>
+  <button class="tab" onclick="switchTab('dashboard')">
+    <span class="tab-icon">📊</span> Dashboard
+  </button>
+</div>
+
+<main>
+
+<!-- ═══════════════ STATS ROW (always visible) ═══════════════ -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">Total Registered</div>
+    <div class="stat-value blue" id="s-total">0</div>
+    <div class="stat-sub">imported participants</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Checked In</div>
+    <div class="stat-value green" id="s-in">0</div>
+    <div class="stat-sub">verified at gate</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-label">Pending</div>
+    <div class="stat-value red" id="s-pending">0</div>
+    <div class="stat-sub">not yet scanned</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-label">Check-in Rate</div>
+    <div class="stat-value yellow" id="s-rate">0%</div>
+    <div class="stat-sub">of total attendees</div>
+    <div class="progress-wrap"><div class="progress-fill" id="s-bar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ IMPORT PAGE ═══════════════ -->
+<div class="page active" id="page-import">
+  <div class="card">
+    <div class="card-title">📋 Event Configuration</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;">
+      <div>
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Event Name</label>
+        <input id="event-name" class="search-bar" style="margin:0" placeholder="e.g. IEEE Summer School 2025" value="IEEE Summer School 2025"/>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Event Date</label>
+        <input id="event-date" type="date" class="search-bar" style="margin:0"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⬆️ Import Participants from CSV / Google Sheets</div>
+    <div class="format-hint">
+      Expected format (copy from Google Sheets):<br/>
+      <strong style="color:var(--ieee-sky)">Name, Email, Ticket ID, Phone (optional)</strong><br/>
+      Ali Hassan, ali@email.com, TKT-001, 0321-1234567<br/>
+      Sara Khan, sara@email.com, TKT-002
+    </div>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="drop-icon">📂</div>
+      <div class="drop-text"><strong>Click to upload CSV</strong> or drag & drop here</div>
+      <div class="drop-text" style="margin-top:6px;font-size:12px;">Supports .csv files exported from Google Sheets</div>
+      <input type="file" id="file-input" accept=".csv,.txt" style="display:none" onchange="handleFileUpload(event)"/>
+    </div>
+
+    <div style="text-align:center;margin:10px 0;color:var(--text-muted);font-size:12px;">— or paste data directly —</div>
+
+    <textarea class="csv-input" id="csv-input" placeholder="Paste your CSV data here...
+Name, Email, Ticket ID
+Ali Hassan, ali@riphah.edu.pk, TKT-001
+Sara Khan, sara@riphah.edu.pk, TKT-002"></textarea>
+
+    <div class="btn-row" style="margin-top:1rem;">
+      <button class="btn btn-primary" onclick="importCSV()">⚡ Import Participants</button>
+      <button class="btn btn-outline" onclick="loadSampleData()">🔬 Load Sample Data</button>
+      <button class="btn btn-danger" onclick="clearAll()">🗑 Clear All</button>
+    </div>
+    <div id="import-msg" style="margin-top:10px;font-size:13px;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PARTICIPANTS PAGE ═══════════════ -->
+<div class="page" id="page-participants">
+  <div class="card">
+    <div class="card-title">👥 All Participants</div>
+    <div style="display:flex;gap:10px;margin-bottom:1rem;">
+      <input class="search-bar" style="margin:0;flex:1" id="search-box" placeholder="🔍  Search by name, email or ticket ID…" oninput="renderParticipants()"/>
+      <select class="search-bar" style="margin:0;width:150px" id="filter-status" onchange="renderParticipants()">
+        <option value="all">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="checked">Checked In</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Ticket ID</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="participants-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No participants imported yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:10px;">
+      <button class="btn btn-green" onclick="checkInAll()">✅ Check In All</button>
+      <button class="btn btn-outline" onclick="resetAll()">🔄 Reset All Check-ins</button>
+      <button class="btn btn-outline" onclick="exportCSV()" style="margin-left:auto">⬇️ Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ QR CODES PAGE ═══════════════ -->
+<div class="page" id="page-qrcodes">
+  <div class="card">
+    <div class="card-title">⬛ QR Code Gallery</div>
+    <div style="margin-bottom:1rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <input class="search-bar" style="margin:0;flex:1;min-width:200px" id="qr-search" placeholder="🔍  Filter participants…" oninput="renderQRCodes()"/>
+      <button class="btn btn-primary" onclick="downloadAllQRs()">⬇️ Download All QR Codes</button>
+    </div>
+    <div class="qr-grid" id="qr-grid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">⬛</div>
+        <div>Import participants first to generate QR codes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Modal -->
+  <div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(2,12,27,0.93);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+    <div style="background:var(--ieee-card);border:1px solid var(--ieee-border);border-radius:16px;padding:2rem;text-align:center;max-width:360px;width:90%;position:relative;">
+      <button onclick="closeQRModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
+      <div id="modal-qr" style="margin:0 auto 1rem;display:inline-block;background:#fff;padding:12px;border-radius:8px;"></div>
+      <div id="modal-name" style="font-size:18px;font-weight:700;margin-bottom:4px;"></div>
+      <div id="modal-email" style="font-size:12px;color:var(--text-muted);margin-bottom:4px;"></div>
+      <div id="modal-ticket" style="font-size:13px;color:var(--ieee-sky);font-family:var(--font-mono);margin-bottom:1rem;"></div>
+      <div id="modal-status" class="badge" style="margin-bottom:1rem;"></div>
+      <br/>
+      <button class="btn btn-primary" onclick="downloadModalQR()">⬇️ Download QR Code</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SCANNER PAGE ═══════════════ -->
+<div class="page" id="page-scanner">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+    <div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">📷 Live Camera Scanner</div>
+        <div class="scanner-wrap">
+          <video id="scanner-video" autoplay playsinline muted></video>
+          <canvas id="scanner-canvas"></canvas>
+          <div class="scan-overlay">
+            <div class="scan-corner tl"></div>
+            <div class="scan-corner tr"></div>
+            <div class="scan-corner bl"></div>
+            <div class="scan-corner br"></div>
+            <div class="scan-line" id="scan-line" style="display:none"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:1rem;">
+          <button class="btn btn-primary" id="start-scan-btn" onclick="startScanner()" style="flex:1">📷 Start Camera</button>
+          <button class="btn btn-danger" id="stop-scan-btn" onclick="stopScanner()" style="flex:1;display:none">⏹ Stop Camera</button>
+        </div>
+        <div style="margin-top:1rem;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Manual Ticket ID Lookup</div>
+          <div class="manual-row">
+            <input class="manual-input" id="manual-input" placeholder="Enter Ticket ID e.g. TKT-001" onkeydown="if(event.key==='Enter')manualCheck()"/>
+            <button class="btn btn-primary" onclick="manualCheck()">Check</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="result-box idle" id="result-box">
+        <div class="result-icon" id="result-icon">🎫</div>
+        <div class="result-name" id="result-name" style="color:var(--text-muted)">Waiting for scan…</div>
+        <div class="result-detail" id="result-detail">Point camera at a QR code</div>
+        <div id="result-sub" style="margin-top:8px;font-size:12px;color:var(--text-muted);"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Recent Scans</div>
+        <div class="log-list" id="scan-log">
+          <div class="empty-state" style="padding:1rem">
+            <div style="font-size:24px;opacity:0.3">📋</div>
+            <div style="font-size:12px;margin-top:6px">No scans yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD PAGE ═══════════════ -->
+<div class="page" id="page-dashboard">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+    <div class="card">
+      <div class="card-title">📈 Check-in Progress</div>
+      <div style="text-align:center;padding:1rem;">
+        <div class="prog-ring">
+          <svg class="ring-svg" width="160" height="160" viewBox="0 0 160 160">
+            <circle class="ring-bg" cx="80" cy="80" r="66"/>
+            <circle class="ring-fill" cx="80" cy="80" r="66" id="dash-ring"
+              stroke-dasharray="414.7"
+              stroke-dashoffset="414.7"/>
+          </svg>
+          <div class="ring-label">
+            <div class="ring-pct" id="dash-pct">0%</div>
+            <div class="ring-sub">checked in</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:2rem;font-size:13px;">
+        <div style="text-align:center"><div style="color:var(--ieee-green);font-weight:700;font-size:18px" id="dash-in">0</div><div style="color:var(--text-muted)">Checked In</div></div>
+        <div style="text-align:center"><div style="color:var(--ieee-red);font-weight:700;font-size:18px" id="dash-out">0</div><div style="color:var(--text-muted)">Pending</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⏱ Timeline (Last 10 Scans)</div>
+      <div id="timeline-list" style="font-size:12px;">
+        <div style="color:var(--text-muted);text-align:center;padding:2rem;">No scans recorded yet</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Event Summary</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+      <div style="background:var(--ieee-panel);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Event Name</div>
+        <div id="ev-name" style="font-weight:600">—</div>
+      </div>
+      <div style="background:var(--ieee-panel);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Event Date</div>
+        <div id="ev-date" style="font-weight:600">—</div>
+      </div>
+      <div style="background:var(--ieee-panel);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Last Scan</div>
+        <div id="ev-lastscan" style="font-weight:600;font-family:var(--font-mono);font-size:13px;">—</div>
+      </div>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="exportReport()">📄 Export Full Report</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ──────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────
+let participants = JSON.parse(localStorage.getItem('ieee_participants') || '[]');
+let scanLog = JSON.parse(localStorage.getItem('ieee_scanlog') || '[]');
+let scanStream = null;
+let scanActive = false;
+let modalParticipant = null;
+
+function save() {
+  localStorage.setItem('ieee_participants', JSON.stringify(participants));
+  localStorage.setItem('ieee_scanlog', JSON.stringify(scanLog));
+  updateStats();
+}
+
+// ──────────────────────────────────────────
+// STATS
+// ──────────────────────────────────────────
+function updateStats() {
+  const total = participants.length;
+  const checked = participants.filter(p => p.checkedIn).length;
+  const pending = total - checked;
+  const rate = total ? Math.round((checked / total) * 100) : 0;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-in').textContent = checked;
+  document.getElementById('s-pending').textContent = pending;
+  document.getElementById('s-rate').textContent = rate + '%';
+  document.getElementById('s-bar').style.width = rate + '%';
+
+  // Dashboard
+  document.getElementById('dash-pct').textContent = rate + '%';
+  document.getElementById('dash-in').textContent = checked;
+  document.getElementById('dash-out').textContent = pending;
+  const circ = 2 * Math.PI * 66;
+  const offset = circ - (rate / 100) * circ;
+  document.getElementById('dash-ring').setAttribute('stroke-dashoffset', offset.toFixed(1));
+
+  document.getElementById('ev-name').textContent = document.getElementById('event-name').value || '—';
+  const d = document.getElementById('event-date').value;
+  document.getElementById('ev-date').textContent = d ? new Date(d).toLocaleDateString('en-PK',{dateStyle:'long'}) : '—';
+  document.getElementById('ev-lastscan').textContent = scanLog.length ? scanLog[scanLog.length-1].time : '—';
+
+  renderTimeline();
+}
+
+// ──────────────────────────────────────────
+// TABS
+// ──────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'participants') renderParticipants();
+  if (name === 'qrcodes') renderQRCodes();
+  if (name === 'dashboard') updateStats();
+}
+
+// ──────────────────────────────────────────
+// IMPORT
+// ──────────────────────────────────────────
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('csv-input').value = ev.target.result;
+    showToast('File loaded: ' + file.name, 'info');
+  };
+  reader.readAsText(file);
+}
+
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = ev => { document.getElementById('csv-input').value = ev.target.result; showToast('File dropped: ' + file.name, 'info'); };
+    reader.readAsText(file);
+  }
+});
+
+function importCSV() {
+  const raw = document.getElementById('csv-input').value.trim();
+  if (!raw) { showToast('Please paste CSV data or upload a file', 'error'); return; }
+  const lines = raw.split('\n').filter(l => l.trim());
+  let startLine = 0;
+  // Skip header row if first cell looks like text header
+  if (lines[0].toLowerCase().includes('name') || lines[0].toLowerCase().includes('email')) startLine = 1;
+
+  const newItems = [];
+  for (let i = startLine; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    if (cols.length < 2) continue;
+    const name = cols[0]; const email = cols[1];
+    const ticketId = cols[2] || ('TKT-' + String(i).padStart(3,'0'));
+    const phone = cols[3] || '';
+    if (!name) continue;
+    // Avoid duplicates by ticketId
+    if (participants.some(p => p.ticketId === ticketId)) continue;
+    newItems.push({ id: Date.now() + i, name, email, ticketId, phone, checkedIn: false, checkinTime: null });
+  }
+  if (!newItems.length) {
+    const msg = document.getElementById('import-msg');
+    msg.innerHTML = '<span style="color:var(--ieee-yellow)">⚠️ No new participants found. Check format or duplicates.</span>';
+    return;
+  }
+  participants = [...participants, ...newItems];
+  save();
+  document.getElementById('import-msg').innerHTML = `<span style="color:var(--ieee-green)">✅ Successfully imported ${newItems.length} participant(s). Total: ${participants.length}</span>`;
+  showToast(`Imported ${newItems.length} participants!`, 'success');
+}
+
+function loadSampleData() {
+  document.getElementById('csv-input').value =
+`Name, Email, Ticket ID, Phone
+Ali Hassan, ali.hassan@riphah.edu.pk, TKT-001, 0321-1234567
+Sara Khan, sara.khan@riphah.edu.pk, TKT-002, 0333-9876543
+Ahmed Raza, ahmed.raza@riphah.edu.pk, TKT-003, 0300-5556789
+Fatima Noor, fatima.noor@riphah.edu.pk, TKT-004, 0311-2223344
+Usman Tariq, usman.tariq@riphah.edu.pk, TKT-005, 0345-6671234
+Zainab Ali, zainab.ali@riphah.edu.pk, TKT-006, 0312-9988776
+Hassan Maqbool, hassan.m@riphah.edu.pk, TKT-007, 0323-4455667
+Ayesha Siddiqui, ayesha.s@riphah.edu.pk, TKT-008, 0301-7788990
+Bilal Chaudhry, bilal.c@riphah.edu.pk, TKT-009, 0344-1122334
+Maria Shahid, maria.s@riphah.edu.pk, TKT-010, 0317-5544332`;
+  showToast('Sample data loaded — click Import!', 'info');
+}
+
+function clearAll() {
+  if (!confirm('Clear ALL participant data and scan logs?')) return;
+  participants = []; scanLog = [];
+  save();
+  document.getElementById('import-msg').innerHTML = '';
+  document.getElementById('csv-input').value = '';
+  renderParticipants(); renderQRCodes();
+  showToast('All data cleared', 'info');
+}
+
+// ──────────────────────────────────────────
+// PARTICIPANTS TABLE
+// ──────────────────────────────────────────
+function renderParticipants() {
+  const q = document.getElementById('search-box').value.toLowerCase();
+  const f = document.getElementById('filter-status').value;
+  const tbody = document.getElementById('participants-tbody');
+  let filtered = participants.filter(p => {
+    const match = p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || p.ticketId.toLowerCase().includes(q);
+    const status = f === 'all' ? true : f === 'checked' ? p.checkedIn : !p.checkedIn;
+    return match && status;
+  });
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">${participants.length ? 'No matches found.' : 'No participants imported yet.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map((p, i) => `
+    <tr>
+      <td style="color:var(--text-muted);font-family:var(--font-mono)">${i+1}</td>
+      <td><strong>${p.name}</strong></td>
+      <td style="color:var(--text-muted)">${p.email}</td>
+      <td style="font-family:var(--font-mono);color:var(--ieee-sky)">${p.ticketId}</td>
+      <td style="color:var(--text-muted)">${p.phone || '—'}</td>
+      <td><span class="badge ${p.checkedIn ? 'badge-checked' : 'badge-pending'}">${p.checkedIn ? '✓ Checked In' : '⏳ Pending'}</span></td>
+      <td>
+        <button class="btn ${p.checkedIn ? 'btn-danger' : 'btn-green'}" style="padding:5px 12px;font-size:11px"
+          onclick="toggleCheckin('${p.ticketId}')">
+          ${p.checkedIn ? 'Undo' : 'Check In'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function toggleCheckin(ticketId) {
+  const p = participants.find(x => x.ticketId === ticketId);
+  if (!p) return;
+  p.checkedIn = !p.checkedIn;
+  p.checkinTime = p.checkedIn ? new Date().toLocaleTimeString() : null;
+  if (p.checkedIn) addLog(p, true);
+  save();
+  renderParticipants();
+  renderQRCodes();
+}
+
+function checkInAll() {
+  participants.forEach(p => { p.checkedIn = true; p.checkinTime = new Date().toLocaleTimeString(); });
+  save(); renderParticipants(); renderQRCodes();
+  showToast('All participants checked in!', 'success');
+}
+
+function resetAll() {
+  if (!confirm('Reset all check-ins?')) return;
+  participants.forEach(p => { p.checkedIn = false; p.checkinTime = null; });
+  scanLog = [];
+  save(); renderParticipants(); renderQRCodes();
+  showToast('All check-ins reset', 'info');
+}
+
+function exportCSV() {
+  const rows = [['Name','Email','Ticket ID','Phone','Status','Check-in Time']];
+  participants.forEach(p => rows.push([p.name,p.email,p.ticketId,p.phone,p.checkedIn?'Checked In':'Pending',p.checkinTime||'']));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download = 'ieee_event_report.csv';
+  a.click();
+}
+
+// ──────────────────────────────────────────
+// QR CODES
+// ──────────────────────────────────────────
+function renderQRCodes() {
+  const grid = document.getElementById('qr-grid');
+  const q = document.getElementById('qr-search')?.value.toLowerCase() || '';
+  let filtered = participants.filter(p =>
+    p.name.toLowerCase().includes(q) || p.ticketId.toLowerCase().includes(q)
+  );
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⬛</div><div>Import participants first to generate QR codes.</div></div>`;
+    return;
+  }
+  grid.innerHTML = '';
+  filtered.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'qr-item' + (p.checkedIn ? ' checked' : '');
+    div.onclick = () => openQRModal(p);
+    const qrDiv = document.createElement('div');
+    qrDiv.className = 'qr-canvas';
+    div.appendChild(qrDiv);
+    div.innerHTML += `<div class="qr-name">${p.name}</div><div class="qr-id">${p.ticketId}</div>`;
+    if (p.checkedIn) div.innerHTML += `<div style="font-size:10px;color:var(--ieee-green);margin-top:4px">✓ Checked In</div>`;
+    grid.appendChild(div);
+    try {
+      new QRCode(qrDiv, { text: p.ticketId + '|' + p.name + '|' + p.email, width: 120, height: 120, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.M });
+    } catch(e) {}
+  });
+}
+
+let modalQR = null;
+function openQRModal(p) {
+  modalParticipant = p;
+  document.getElementById('modal-name').textContent = p.name;
+  document.getElementById('modal-email').textContent = p.email;
+  document.getElementById('modal-ticket').textContent = p.ticketId;
+  const sb = document.getElementById('modal-status');
+  sb.textContent = p.checkedIn ? '✓ Checked In' : '⏳ Pending';
+  sb.className = 'badge ' + (p.checkedIn ? 'badge-checked' : 'badge-pending');
+  const container = document.getElementById('modal-qr');
+  container.innerHTML = '';
+  try {
+    modalQR = new QRCode(container, { text: p.ticketId + '|' + p.name + '|' + p.email, width: 200, height: 200, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.H });
+  } catch(e) {}
+  const modal = document.getElementById('qr-modal');
+  modal.style.display = 'flex';
+}
+function closeQRModal() { document.getElementById('qr-modal').style.display = 'none'; }
+
+function downloadModalQR() {
+  if (!modalParticipant) return;
+  const img = document.querySelector('#modal-qr img') || document.querySelector('#modal-qr canvas');
+  if (!img) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = 280; canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,280,320);
+  const src = img.tagName === 'CANVAS' ? img.toDataURL() : img.src;
+  const i = new Image();
+  i.onload = () => {
+    ctx.drawImage(i, 40, 20, 200, 200);
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(modalParticipant.name, 140, 240);
+    ctx.font = '11px monospace';
+    ctx.fillStyle = '#333';
+    ctx.fillText(modalParticipant.ticketId, 140, 258);
+    ctx.fillText('IEEE Riphah – Summer School', 140, 276);
+    const a = document.createElement('a');
+    a.download = 'QR_' + modalParticipant.ticketId + '.png';
+    a.href = canvas.toDataURL();
+    a.click();
+  };
+  i.src = src;
+}
+
+function downloadAllQRs() {
+  showToast('Opening each QR individually — use browser print for bulk!', 'info');
+  participants.forEach((p, i) => {
+    setTimeout(() => {
+      const tmp = document.createElement('div');
+      tmp.style.cssText = 'position:absolute;left:-9999px;top:0';
+      document.body.appendChild(tmp);
+      const qrInst = new QRCode(tmp, { text: p.ticketId+'|'+p.name+'|'+p.email, width:200, height:200, colorDark:'#000', colorLight:'#fff' });
+      setTimeout(() => {
+        const cv = tmp.querySelector('canvas') || tmp.querySelector('img');
+        if (cv) {
+          const canvas = document.createElement('canvas');
+          canvas.width=240; canvas.height=280;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle='#fff'; ctx.fillRect(0,0,240,280);
+          const src = cv.tagName==='CANVAS'?cv.toDataURL():cv.src;
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img,20,10,200,200);
+            ctx.fillStyle='#000'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
+            ctx.fillText(p.name,120,228); ctx.font='10px monospace'; ctx.fillStyle='#333';
+            ctx.fillText(p.ticketId,120,244);
+            const a=document.createElement('a'); a.download='QR_'+p.ticketId+'.png'; a.href=canvas.toDataURL(); a.click();
+          };
+          img.src=src;
+        }
+        document.body.removeChild(tmp);
+      }, 200);
+    }, i * 400);
+  });
+}
+
+// ──────────────────────────────────────────
+// SCANNER
+// ──────────────────────────────────────────
+async function startScanner() {
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.getElementById('scanner-video');
+    video.srcObject = scanStream;
+    document.getElementById('start-scan-btn').style.display = 'none';
+    document.getElementById('stop-scan-btn').style.display = '';
+    document.getElementById('scan-line').style.display = 'block';
+    scanActive = true;
+    requestAnimationFrame(scanFrame);
+    showToast('Camera started — point at QR code', 'info');
+  } catch(e) {
+    showToast('Camera access denied. Use manual lookup below.', 'error');
+  }
+}
+
+function stopScanner() {
+  scanActive = false;
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  const v = document.getElementById('scanner-video');
+  v.srcObject = null;
+  document.getElementById('start-scan-btn').style.display = '';
+  document.getElementById('stop-scan-btn').style.display = 'none';
+  document.getElementById('scan-line').style.display = 'none';
+}
+
+let lastScanned = '';
+let lastScanTime = 0;
+function scanFrame() {
+  if (!scanActive) return;
+  const video = document.getElementById('scanner-video');
+  const canvas = document.getElementById('scanner-canvas');
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (code) {
+      const now = Date.now();
+      if (code.data !== lastScanned || now - lastScanTime > 3000) {
+        lastScanned = code.data; lastScanTime = now;
+        processQRData(code.data);
+      }
+    }
+  }
+  requestAnimationFrame(scanFrame);
+}
+
+function processQRData(data) {
+  const parts = data.split('|');
+  const ticketId = parts[0];
+  verifyTicket(ticketId);
+}
+
+function manualCheck() {
+  const val = document.getElementById('manual-input').value.trim();
+  if (!val) return;
+  verifyTicket(val);
+  document.getElementById('manual-input').value = '';
+}
+
+function verifyTicket(ticketId) {
+  const p = participants.find(x => x.ticketId.toLowerCase() === ticketId.toLowerCase());
+  const box = document.getElementById('result-box');
+  const icon = document.getElementById('result-icon');
+  const name = document.getElementById('result-name');
+  const detail = document.getElementById('result-detail');
+  const sub = document.getElementById('result-sub');
+
+  if (!p) {
+    box.className = 'result-box fail';
+    icon.textContent = '❌';
+    name.textContent = 'Ticket Not Found';
+    name.style.color = 'var(--ieee-red)';
+    detail.textContent = 'ID: ' + ticketId + ' — Not in database';
+    detail.className = 'result-detail red';
+    sub.textContent = '';
+    showToast('Invalid ticket: ' + ticketId, 'error');
+    addLog({ name: 'Unknown', ticketId }, false);
+    return;
+  }
+
+  if (p.checkedIn) {
+    box.className = 'result-box fail';
+    icon.textContent = '⚠️';
+    name.textContent = p.name;
+    name.style.color = 'var(--ieee-yellow)';
+    detail.textContent = 'Already checked in at ' + p.checkinTime;
+    detail.className = 'result-detail';
+    detail.style.color = 'var(--ieee-yellow)';
+    sub.textContent = p.email;
+    showToast('Duplicate scan: ' + p.name, 'error');
+    return;
+  }
+
+  p.checkedIn = true;
+  p.checkinTime = new Date().toLocaleTimeString('en-PK');
+  save();
+  renderQRCodes();
+
+  box.className = 'result-box success';
+  icon.textContent = '✅';
+  name.textContent = p.name;
+  name.style.color = 'var(--ieee-green)';
+  detail.textContent = 'Valid Ticket — Welcome!';
+  detail.className = 'result-detail green';
+  detail.style.color = '';
+  sub.textContent = p.ticketId + ' · ' + p.email;
+  showToast('Checked in: ' + p.name, 'success');
+  addLog(p, true);
+}
+
+function addLog(p, success) {
+  scanLog.push({ name: p.name, ticketId: p.ticketId, success, time: new Date().toLocaleTimeString('en-PK') });
+  if (scanLog.length > 50) scanLog.shift();
+  save();
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('scan-log');
+  if (!scanLog.length) { el.innerHTML = '<div class="empty-state" style="padding:1rem"><div style="font-size:24px;opacity:0.3">📋</div><div style="font-size:12px;margin-top:6px">No scans yet</div></div>'; return; }
+  el.innerHTML = [...scanLog].reverse().slice(0,15).map(l => `
+    <div class="log-item">
+      <span class="log-dot ${l.success?'ok':'err'}"></span>
+      <span class="log-time">${l.time}</span>
+      <span class="log-name">${l.name}</span>
+      <span class="log-status">${l.success ? '✓ OK' : '✗ FAIL'}</span>
+    </div>
+  `).join('');
+}
+
+// ──────────────────────────────────────────
+// DASHBOARD TIMELINE
+// ──────────────────────────────────────────
+function renderTimeline() {
+  const el = document.getElementById('timeline-list');
+  const recent = [...scanLog].filter(l => l.success).reverse().slice(0, 10);
+  if (!recent.length) { el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:2rem;">No scans recorded yet</div>'; return; }
+  el.innerHTML = recent.map(l => `
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(13,58,110,0.3);">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--ieee-green);flex-shrink:0;"></div>
+      <div style="flex:1;font-size:12px;font-weight:600">${l.name}</div>
+      <div style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">${l.time}</div>
+    </div>
+  `).join('');
+}
+
+function exportReport() {
+  const evName = document.getElementById('event-name').value;
+  const evDate = document.getElementById('event-date').value;
+  const total = participants.length;
+  const checked = participants.filter(p => p.checkedIn).length;
+  let html = `<html><head><title>IEEE Event Report</title>
+  <style>body{font-family:Arial,sans-serif;padding:2rem;} table{border-collapse:collapse;width:100%} th,td{border:1px solid #ccc;padding:8px;text-align:left} th{background:#006699;color:#fff} tr:nth-child(even){background:#f5f5f5}</style></head><body>
+  <h1 style="color:#006699">IEEE TicketScan Report</h1>
+  <p><strong>Event:</strong> ${evName} | <strong>Date:</strong> ${evDate}</p>
+  <p><strong>Total:</strong> ${total} | <strong>Checked In:</strong> ${checked} | <strong>Pending:</strong> ${total-checked} | <strong>Rate:</strong> ${total?Math.round(checked/total*100):0}%</p>
+  <table><tr><th>Name</th><th>Email</th><th>Ticket ID</th><th>Phone</th><th>Status</th><th>Time</th></tr>
+  ${participants.map(p=>`<tr><td>${p.name}</td><td>${p.email}</td><td>${p.ticketId}</td><td>${p.phone||'—'}</td><td>${p.checkedIn?'✓ Checked In':'Pending'}</td><td>${p.checkinTime||'—'}</td></tr>`).join('')}
+  </table></body></html>`;
+  const a = document.createElement('a');
+  a.href = 'data:text/html,' + encodeURIComponent(html);
+  a.download = 'IEEE_Event_Report.html';
+  a.click();
+}
+
+// ──────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────
+let toastTimeout;
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+// ──────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────
+document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
+updateStats();
+renderLog();
+</script>
 </body>
 </html>
